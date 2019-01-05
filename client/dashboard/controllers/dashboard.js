@@ -1,39 +1,42 @@
-// TODO: cleanup comments
-/* global JobMonitor: true, io: true */
 'use strict';
 
 var $ = require('jquery');
 var _ = require('lodash');
-var JobMonitor = require('../../utils/job-monitor');
 var io = require('socket.io-client');
-var statusClasses = {
-  passed: 'fa-check-circle success-text',
-  failed: 'fa-exclamation-circle failure-text',
-  running: 'fa-cog fa-spin',
-  submitted: 'fa-clock-o waiting-text',
-  errored: 'fa-minus-circle error-text'
-};
+var JobMonitor = require('../../utils/job-monitor');
+var statusClasses = require('../../utils/status-classes');
 
-module.exports = function ($scope, $element) {
+module.exports = function ($scope) {
   var socket = io.connect();
-  var dash = new Dashboard(socket, $scope);
+  new Dashboard(socket, $scope);
 
   $scope.statusClasses = statusClasses;
-  $scope.providers = global.providers
+  $scope.providers = global.providers;
   $scope.phases = ['environment', 'prepare', 'test', 'deploy', 'cleanup'];
   $('#dashboard').show();
   $scope.startDeploy = function (job) {
     $('.tooltip').hide();
-    socket.emit('deploy', job.project.name)
+    var branchToUse = determineTargetBranch(job);
+    socket.emit('deploy', job.project.name, branchToUse);
   };
   $scope.startTest = function (job) {
     $('.tooltip').hide();
-    socket.emit('test', job.project.name)
+    var branchToUse = determineTargetBranch(job);
+    socket.emit('test', job.project.name, branchToUse);
   };
   $scope.cancelJob = function (id) {
-    socket.emit('cancel', id)
+    socket.emit('cancel', id);
   };
 };
+
+/**
+ * Given a job, returns a branch name that should be used for a deployment or test action.
+ * @param {Object} job The job for which to determine the target branch.
+ * @returns {String} If a reference build is defined, returns the name of the branch of the reference build; "master" otherwise.
+ */
+function determineTargetBranch(job) {
+  return job.ref ? job.ref.branch : 'master';
+}
 
 function cleanJob(job) {
   delete job.phases;
@@ -58,22 +61,22 @@ function Dashboard(socket, $scope) {
 _.extend(Dashboard.prototype, JobMonitor.prototype, {
   job: function (id, access) {
     var jobs = this.scope.jobs[access];
-    for (var i=0; i<jobs.length; i++) {
+    for (var i = 0; i < jobs.length; i++) {
       if (jobs[i]._id === id) return jobs[i];
     }
   },
   addJob: function (job, access) {
-    var jobs = this.scope.jobs[access]
-      , found = -1
-      , old;
-    for (var i=0; i<jobs.length; i++) {
+    var jobs = this.scope.jobs[access];
+    var found = -1;
+
+    for (var i = 0; i < jobs.length; i++) {
       if (jobs[i].project.name === job.project.name) {
         found = i;
         break;
       }
     }
     if (found !== -1) {
-      old = jobs.splice(found, 1)[0];
+      var old = jobs.splice(found, 1)[0];
       job.project.prev = old.project.prev;
     }
     if (job.phases) {
@@ -83,7 +86,7 @@ _.extend(Dashboard.prototype, JobMonitor.prototype, {
     }
     job.phase = 'environment';
     jobs.unshift(job);
-  },
+  }
 });
 
 Dashboard.prototype.statuses['phase.done'] = function (data) {

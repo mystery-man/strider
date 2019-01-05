@@ -1,8 +1,11 @@
 # ![Strider][logo]
 
-[![NPM][npm-badge-img]][npm-badge-link]
----
+[![NPM][npm-badge-img]][npm-badge-link] [![Code Climate][cc-badge]][cc-badge-link] [![Dependency Status][david-badge]][david-badge-link] [![Build Status][travis-badge]][travis-badge-link]  
+[![Gitter][gitter-badge]][gitter-badge-link]
+[![Backers on Open Collective][backers-badge-img]](#backers)
+[![Sponsors on Open Collective][sponsors-badge-img]](#sponsors)
 
+---
 
 ### Brilliant Continuous Deployment
 
@@ -26,26 +29,16 @@ Strider is extremely customizable through plugins. Plugins can
 - create or modify user interfaces within Strider.
 - so much more! just use your imagination!
 
-For more details check out the [introductory chapter of the Strider Book][book-intro]
-
-## README Contents
-
-- [General requirements](#general-requirements)
-- [Running on Infrastructure](#running-on-infrastructure)
-    - [Configuring](#configuring)
-    - [Adding Users](#adding-initial-admin-user)
-    - [Starting Strider](#starting-strider)
-    - [Heroku](#strider-on-heroku)
-    - [Docker](#strider-in-docker)
-- [Advanced Topics](#advanced-topics)
-- [Support & Help](#support--help)
-- [Roadmap / Changelog][roadmap]
-
 ## General Requirements
 
-- nodejs, v0.8 or v0.10
-- mongodb (local or remote)
-- git >= 1.7.10
+- [nodejs] >= 4.2
+- [git] >= 2.0
+- [mongodb][mongo-download] (local or remote)
+- [node-gyp]
+
+_Note: Installing on OS X might require XCode to be installed._
+
+- The package `krb5-devel`/`libkrb5-dev` might have to be installed to resolve Kerberos related build issues on some systems.
 
 
 ## Running on Infrastructure
@@ -61,25 +54,37 @@ by executing the following command in the project root:
 npm install
 ```
 
+> Note: Sometimes there are issues with permissions and installing global modules, in those cases run `npm config set prefix ~/npm` to set your global modules directory to '~/npm'. You will also have to add `~/npm/bin` to your `PATH` environment variable.
+
 ### Configuring
 
 `Strider` configuration comes from environment variables. Most of the default
 values should work fine for running on localhost, however for an
 Internet-accessible deployment the following variables will need to be exported:
 
-  - `SERVER_NAME` - Required; Address at which server will be accessible on the Internet. E.g. `https://strider.example.com` (note: no trailing slash)
+  - `SERVER_NAME` - **Required**; Address at which server will be accessible on the Internet. E.g. `https://strider.example.com` (note: no trailing slash, and included protocol)
   - `HOST` - Host where strider listens, optional (defaults to 0.0.0.0).
   - `PORT` - Port that strider runs on, optional (defaults to 3000).
-  - `DB_URI` - MongoDB DB URI if not localhost (you can safely use MongoLab free plan - works great)
- 
-  - If you want email notifications, configure an SMTP server (we recommend Mailgun for SMTP if you need a server - free account gives 200 emails / day):
+  - `CONCURRENT_JOBS` - How many jobs to run concurrently (defaults to 1). Concurrency only works across different project and branch combinations. So if two jobs come in for the same project and branch, concurrency will always be 1.
+  - `STRIDER_CLONE_DEST` - Where the repositories are cloned to (defaults to ~/.strider)
+  - `DB_URI` - MongoDB DB URI (with port number if local, e.g. localhost:27017) if not localhost (you can safely use [MongoLab free plan][mongolab] - works great)
+  - `HTTP_PROXY` - Proxy support, optional (defaults to null)
+  - If you want email notifications, configure an SMTP server (we recommend [Mailgun] for SMTP if you need a server - free account gives 200 emails / day):
     - `SMTP_HOST` - SMTP server hostname e.g. smtp.example.com
     - `SMTP_PORT` - SMTP server port e.g. 587 (default)
+    - `SMTP_SECURE` - SMTP server TLS or SSL ("true" or "false")
     - `SMTP_USER` - SMTP auth username e.g. "myuser"
     - `SMTP_PASS` - SMTP auth password e.g. "supersecret"
     - `SMTP_FROM` - Default FROM address e.g. "Strider <noreply@stridercd.com>" (default)
 
 #### Additional Configurations
+
+- `BODY_PARSER_LIMIT` - Increase the maximum payload size that our [body parser][body-parser] will attempt to parse. Useful for github web hooks.
+- `DEBUG` - Set this to `strider*` to enable all debug output. This is very helpful when troubleshooting issues or finding the cause of bugs in Strider. For more information see https://www.npmjs.com/package/debug
+- `JOBS_QUANTITY_ON_PAGE_ENABLED` - Whether users can set quantity in Account Management
+- `JOBS_QUANTITY_ON_PAGE_DEFAULT` - Number of jobs to display when not enabled
+- `JOBS_QUANTITY_ON_PAGE_MIN` - Minimal value
+- `JOBS_QUANTITY_ON_PAGE_MAX` - Maximum value
 
 You might need to follow these instructions if you use any of these, please do so before filing issues.
 
@@ -109,18 +114,33 @@ Email:    strider@example.com
 Password: ****
 isAdmin:  true
 OK? (y/n) [y]:
-22 Oct 21:21:01 - info: Connecting to MongoDB URL: mongodb://localhost/strider-foss
+22 Oct 21:21:01 - info: Connecting to MongoDB URL: mongodb://localhost:27017/strider-foss
 22 Oct 21:21:01 - info: User added successfully! Enjoy.
 ```
 
-See the [strider-cli] for more details.
+See the [strider-cli] for more details.  
+
+If you want to connect to your ldap server to authorization  
+you can also add the `ldap.json` config file to project root  
+the config like so:  
+
+```javascript
+ {
+    "url": ldap://host:port,
+    "baseDN": dnString,
+    "username": username,
+    "password": password,
+    // If you want to set a admin group
+    "adminDN": dnString
+ }
+```
 
 ### Starting Strider
 
 Once `Strider` has been installed and configured, it can be started with:
 
 ```no-highlight
-npm start
+NODE_ENV=production npm start
 ```
 
 ### Strider on Heroku
@@ -142,6 +162,7 @@ Please post related issues in the [issues section](https://github.com/Strider-CD
 
 ## Resources
 
+- [Strider Tutorial Series][resource-strider-futurestudio-tutorials] - Extensive guides about Strider covering platform setup, 3rd party integrations (GitHub, GitLab, etc), continuous deployments (Heroku, SSH), notifications (email, Slack, HipChat), how to create your own Strider plugin and many more.
 - [Strider on DigitalOcean][resource-digitalocean] - Covers setting up an Ubuntu machine with Strider using upstart.
 - [Strider plugin template][resource-plugin-template] - Simple setup for getting started with your own plugin.
 - [Panamax Strider template][resource-panamax-template] - Strider template for use with Panamax.
@@ -152,25 +173,96 @@ Please post related issues in the [issues section](https://github.com/Strider-CD
 Advanced topics are located in the [Wiki](https://github.com/Strider-CD/strider/wiki), here's a small
 subset of what's covered:
 
+- [Advanced Configuration](https://github.com/Strider-CD/strider/wiki/Advanced-Configuration)
 - [Requiring Strider](https://github.com/Strider-CD/strider/wiki/Requiring-Strider)
 - [Managing Plugins](https://github.com/Strider-CD/strider/wiki/Managing-Plugins)
 
+## API Documentation
+
+An effort has been started to document the existing REST API, and to have versioned documentation going forward.
+We use [apiDoc] for the documentation.
+
+To build the documentation run `npm run docs` and the documentation will be accessable from `apidocs/index.html`.
+
+**[View Strider API Docs](http://strider-api-docs.surge.sh/)**
+
+## Backers
+
+Support us with a monthly donation and help us continue our activities. [[Become a backer](https://opencollective.com/strider#backer)]
+
+<a href="https://opencollective.com/strider/backer/0/website" target="_blank"><img src="https://opencollective.com/strider/backer/0/avatar.svg"></a>
+<a href="https://opencollective.com/strider/backer/1/website" target="_blank"><img src="https://opencollective.com/strider/backer/1/avatar.svg"></a>
+<a href="https://opencollective.com/strider/backer/2/website" target="_blank"><img src="https://opencollective.com/strider/backer/2/avatar.svg"></a>
+<a href="https://opencollective.com/strider/backer/3/website" target="_blank"><img src="https://opencollective.com/strider/backer/3/avatar.svg"></a>
+<a href="https://opencollective.com/strider/backer/4/website" target="_blank"><img src="https://opencollective.com/strider/backer/4/avatar.svg"></a>
+<a href="https://opencollective.com/strider/backer/5/website" target="_blank"><img src="https://opencollective.com/strider/backer/5/avatar.svg"></a>
+<a href="https://opencollective.com/strider/backer/6/website" target="_blank"><img src="https://opencollective.com/strider/backer/6/avatar.svg"></a>
+<a href="https://opencollective.com/strider/backer/7/website" target="_blank"><img src="https://opencollective.com/strider/backer/7/avatar.svg"></a>
+<a href="https://opencollective.com/strider/backer/8/website" target="_blank"><img src="https://opencollective.com/strider/backer/8/avatar.svg"></a>
+<a href="https://opencollective.com/strider/backer/9/website" target="_blank"><img src="https://opencollective.com/strider/backer/9/avatar.svg"></a>
+<a href="https://opencollective.com/strider/backer/10/website" target="_blank"><img src="https://opencollective.com/strider/backer/10/avatar.svg"></a>
+<a href="https://opencollective.com/strider/backer/11/website" target="_blank"><img src="https://opencollective.com/strider/backer/11/avatar.svg"></a>
+<a href="https://opencollective.com/strider/backer/12/website" target="_blank"><img src="https://opencollective.com/strider/backer/12/avatar.svg"></a>
+<a href="https://opencollective.com/strider/backer/13/website" target="_blank"><img src="https://opencollective.com/strider/backer/13/avatar.svg"></a>
+<a href="https://opencollective.com/strider/backer/14/website" target="_blank"><img src="https://opencollective.com/strider/backer/14/avatar.svg"></a>
+<a href="https://opencollective.com/strider/backer/15/website" target="_blank"><img src="https://opencollective.com/strider/backer/15/avatar.svg"></a>
+<a href="https://opencollective.com/strider/backer/16/website" target="_blank"><img src="https://opencollective.com/strider/backer/16/avatar.svg"></a>
+<a href="https://opencollective.com/strider/backer/17/website" target="_blank"><img src="https://opencollective.com/strider/backer/17/avatar.svg"></a>
+<a href="https://opencollective.com/strider/backer/18/website" target="_blank"><img src="https://opencollective.com/strider/backer/18/avatar.svg"></a>
+<a href="https://opencollective.com/strider/backer/19/website" target="_blank"><img src="https://opencollective.com/strider/backer/19/avatar.svg"></a>
+<a href="https://opencollective.com/strider/backer/20/website" target="_blank"><img src="https://opencollective.com/strider/backer/20/avatar.svg"></a>
+<a href="https://opencollective.com/strider/backer/21/website" target="_blank"><img src="https://opencollective.com/strider/backer/21/avatar.svg"></a>
+<a href="https://opencollective.com/strider/backer/22/website" target="_blank"><img src="https://opencollective.com/strider/backer/22/avatar.svg"></a>
+<a href="https://opencollective.com/strider/backer/23/website" target="_blank"><img src="https://opencollective.com/strider/backer/23/avatar.svg"></a>
+<a href="https://opencollective.com/strider/backer/24/website" target="_blank"><img src="https://opencollective.com/strider/backer/24/avatar.svg"></a>
+<a href="https://opencollective.com/strider/backer/25/website" target="_blank"><img src="https://opencollective.com/strider/backer/25/avatar.svg"></a>
+<a href="https://opencollective.com/strider/backer/26/website" target="_blank"><img src="https://opencollective.com/strider/backer/26/avatar.svg"></a>
+<a href="https://opencollective.com/strider/backer/27/website" target="_blank"><img src="https://opencollective.com/strider/backer/27/avatar.svg"></a>
+<a href="https://opencollective.com/strider/backer/28/website" target="_blank"><img src="https://opencollective.com/strider/backer/28/avatar.svg"></a>
+<a href="https://opencollective.com/strider/backer/29/website" target="_blank"><img src="https://opencollective.com/strider/backer/29/avatar.svg"></a>
+
+
+## Sponsors
+
+Become a sponsor and get your logo on our README on Github with a link to your site. [[Become a sponsor](https://opencollective.com/strider#sponsor)]
+
+<a href="https://opencollective.com/strider/sponsor/0/website" target="_blank"><img src="https://opencollective.com/strider/sponsor/0/avatar.svg"></a>
+<a href="https://opencollective.com/strider/sponsor/1/website" target="_blank"><img src="https://opencollective.com/strider/sponsor/1/avatar.svg"></a>
+<a href="https://opencollective.com/strider/sponsor/2/website" target="_blank"><img src="https://opencollective.com/strider/sponsor/2/avatar.svg"></a>
+<a href="https://opencollective.com/strider/sponsor/3/website" target="_blank"><img src="https://opencollective.com/strider/sponsor/3/avatar.svg"></a>
+<a href="https://opencollective.com/strider/sponsor/4/website" target="_blank"><img src="https://opencollective.com/strider/sponsor/4/avatar.svg"></a>
+<a href="https://opencollective.com/strider/sponsor/5/website" target="_blank"><img src="https://opencollective.com/strider/sponsor/5/avatar.svg"></a>
+<a href="https://opencollective.com/strider/sponsor/6/website" target="_blank"><img src="https://opencollective.com/strider/sponsor/6/avatar.svg"></a>
+<a href="https://opencollective.com/strider/sponsor/7/website" target="_blank"><img src="https://opencollective.com/strider/sponsor/7/avatar.svg"></a>
+<a href="https://opencollective.com/strider/sponsor/8/website" target="_blank"><img src="https://opencollective.com/strider/sponsor/8/avatar.svg"></a>
+<a href="https://opencollective.com/strider/sponsor/9/website" target="_blank"><img src="https://opencollective.com/strider/sponsor/9/avatar.svg"></a>
+<a href="https://opencollective.com/strider/sponsor/10/website" target="_blank"><img src="https://opencollective.com/strider/sponsor/10/avatar.svg"></a>
+<a href="https://opencollective.com/strider/sponsor/11/website" target="_blank"><img src="https://opencollective.com/strider/sponsor/11/avatar.svg"></a>
+<a href="https://opencollective.com/strider/sponsor/12/website" target="_blank"><img src="https://opencollective.com/strider/sponsor/12/avatar.svg"></a>
+<a href="https://opencollective.com/strider/sponsor/13/website" target="_blank"><img src="https://opencollective.com/strider/sponsor/13/avatar.svg"></a>
+<a href="https://opencollective.com/strider/sponsor/14/website" target="_blank"><img src="https://opencollective.com/strider/sponsor/14/avatar.svg"></a>
+<a href="https://opencollective.com/strider/sponsor/15/website" target="_blank"><img src="https://opencollective.com/strider/sponsor/15/avatar.svg"></a>
+<a href="https://opencollective.com/strider/sponsor/16/website" target="_blank"><img src="https://opencollective.com/strider/sponsor/16/avatar.svg"></a>
+<a href="https://opencollective.com/strider/sponsor/17/website" target="_blank"><img src="https://opencollective.com/strider/sponsor/17/avatar.svg"></a>
+<a href="https://opencollective.com/strider/sponsor/18/website" target="_blank"><img src="https://opencollective.com/strider/sponsor/18/avatar.svg"></a>
+<a href="https://opencollective.com/strider/sponsor/19/website" target="_blank"><img src="https://opencollective.com/strider/sponsor/19/avatar.svg"></a>
+<a href="https://opencollective.com/strider/sponsor/20/website" target="_blank"><img src="https://opencollective.com/strider/sponsor/20/avatar.svg"></a>
+<a href="https://opencollective.com/strider/sponsor/21/website" target="_blank"><img src="https://opencollective.com/strider/sponsor/21/avatar.svg"></a>
+<a href="https://opencollective.com/strider/sponsor/22/website" target="_blank"><img src="https://opencollective.com/strider/sponsor/22/avatar.svg"></a>
+<a href="https://opencollective.com/strider/sponsor/23/website" target="_blank"><img src="https://opencollective.com/strider/sponsor/23/avatar.svg"></a>
+<a href="https://opencollective.com/strider/sponsor/24/website" target="_blank"><img src="https://opencollective.com/strider/sponsor/24/avatar.svg"></a>
+<a href="https://opencollective.com/strider/sponsor/25/website" target="_blank"><img src="https://opencollective.com/strider/sponsor/25/avatar.svg"></a>
+<a href="https://opencollective.com/strider/sponsor/26/website" target="_blank"><img src="https://opencollective.com/strider/sponsor/26/avatar.svg"></a>
+<a href="https://opencollective.com/strider/sponsor/27/website" target="_blank"><img src="https://opencollective.com/strider/sponsor/27/avatar.svg"></a>
+<a href="https://opencollective.com/strider/sponsor/28/website" target="_blank"><img src="https://opencollective.com/strider/sponsor/28/avatar.svg"></a>
+<a href="https://opencollective.com/strider/sponsor/29/website" target="_blank"><img src="https://opencollective.com/strider/sponsor/29/avatar.svg"></a>
+
+
 ## Support & Help
 
-We are very responsive to Github Issues - please think of them as a message board for the project!
+We are responsive to Github Issues - please don't hesitate submitting your issues here!
 
-### IRC Channel
-
-You can find us on irc.freenode.net in #strider
-
-If nobody is responding, don't leave immediately. Someone will eventually respond. If you don't want to wait please create a Github issue! Many Strider contributors don't use IRC at all, but will respond pretty quickly to new Github Issues.
-
-### Commercial Support
-
-Strider is maintained and supported by [FrozenRidge,
-LLC][maintainer]. For commercial support, customization, integration
-& hosting enquiries please email hi@frozenridge.co.
-
+For live help check out Strider's [Gitter].
 
 [logo]: https://raw.github.com/Strider-CD/strider/master/public/images/top_github.png
 [build-img]: http://public-ci.stridercd.com/Strider-CD/strider/badge
@@ -179,14 +271,17 @@ LLC][maintainer]. For commercial support, customization, integration
 [dep-link]: https://david-dm.org/Strider-CD/strider
 [dev-dep-img]: https://david-dm.org/Strider-CD/strider/dev-status.svg
 [dev-dep-link]: https://david-dm.org/Strider-CD/strider#info=devDependencies
-[npm-badge-img]: https://nodei.co/npm/strider.svg?downloads=true&stars=true
-[npm-badge-link]: https://nodei.co/npm/strider/
-[screenshot]: /docs/screenshots/dashboard.jpg?raw=true
+[npm-badge-img]: https://badge.fury.io/js/strider.svg
+[npm-badge-link]: http://badge.fury.io/js/strider
+[backers-badge-img]: https://opencollective.com/strider/backers/badge.svg
+[sponsors-badge-img]: https://opencollective.com/strider/sponsors/badge.svg
+[screenshot]: /docs/screenshots/dashboard.jpg
 [more-screenshots]: https://github.com/Strider-CD/strider/wiki/Screenshots
+[mongolab]: https://mongolab.com/plans/pricing/
+[mailgun]: http://www.mailgun.com/pricing
 [book-intro]: http://strider.readthedocs.org/en/latest/intro.html
-[roadmap]: https://github.com/Strider-CD/strider/blob/master/ROADMAP.md
+[changelog]: https://github.com/Strider-CD/strider/blob/master/CHANGELOG.md
 [mongo-download]: http://www.mongodb.org/downloads
-[nodejs]: http://nodejs.org
 [resource-digitalocean]: http://fosterelli.co/creating-a-private-ci-with-strider.html
 [resource-plugin-template]: https://github.com/bitwit/strider-template
 [resource-panamax-template]: https://github.com/CenturyLinkLabs/panamax-contest-templates/blob/master/stridercd_mrsmith.pmx
@@ -197,3 +292,21 @@ LLC][maintainer]. For commercial support, customization, integration
 [bitbucket-config]: https://github.com/Strider-CD/strider-bitbucket#configuration
 [gitlab-config]: https://github.com/Strider-CD/strider-gitlab#setup
 [heroku-config]: https://github.com/Strider-CD/strider-heroku#important-config
+[cc-badge]: https://codeclimate.com/github/Strider-CD/strider/badges/gpa.svg
+[cc-badge-link]: https://codeclimate.com/github/Strider-CD/strider
+[david-badge]: https://david-dm.org/Strider-CD/strider.svg
+[david-badge-link]: https://david-dm.org/Strider-CD/strider
+[body-parser]: https://github.com/expressjs/body-parser
+[node-gyp]: https://github.com/TooTallNate/node-gyp#installation
+[git]: http://git-scm.com/
+[nodejs]: http://nodejs.org/
+[npm]: https://docs.npmjs.com/getting-started/installing-node
+[Gitter]: https://gitter.im/Strider-CD
+[travis-badge]: https://travis-ci.org/Strider-CD/strider.svg?branch=master
+[travis-badge-link]: https://travis-ci.org/Strider-CD/strider
+[gitter-badge]: https://img.shields.io/badge/GITTER-join%20chat-green.svg
+[gitter-badge-link]: https://gitter.im/Strider-CD
+[apiDoc]: http://apidocjs.com/#getting-started
+[resource-strider-futurestudio-tutorials]: https://futurestud.io/blog/strider-getting-started-platform-overview/
+
+

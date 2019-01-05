@@ -5,17 +5,19 @@ require('bootstrap');
 var $ = require('jquery');
 var _ = require('lodash');
 var angular = require('angular');
-var ngRoute = require('angular-route');
 var $navbar = $('.navbar');
 
+require('angular-route');
+
 $navbar.find('li').removeClass('active');
-$navbar.find('a[href="' + global.location.pathname + '"]')
+$navbar.find(`a[href="${global.location.pathname}"]`)
   .parent().addClass('active');
+$('#layout-header').hide();
+$('#invite-box').height($('#signup-box').height());
 
 // Third party
 require('ui-bootstrap');
 require('ui-codemirror');
-require('ui-sortable');
 
 // Modules
 require('./account');

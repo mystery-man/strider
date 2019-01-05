@@ -1,7 +1,7 @@
 module.exports = function (browser, callback) {
   describe('Branch Management', function () {
 
-    beforeEach(function() {
+    beforeEach(function () {
       this.currentTest.browser = browser;
     });
 
@@ -11,16 +11,16 @@ module.exports = function (browser, callback) {
         .type('test2@example.com')
         .elementByName('password')
         .type('test')
-        .elementById('navbar-signin-form')
+        .elementByClassName('login-form')
         .submit()
-        .waitForElementByClassName('logged-in')
+        .waitForElementById('job-list')
         .rel('/strider-cd/test-node/config')
         .waitForElementByCssSelector('#project_config_branches')
-        .isDisplayed()
-    })
+        .isDisplayed();
+    });
 
     it('should add a new branch to be watched', function () {
-      return browser.rel('/strider-cd/test-node/config')
+      return browser.rel('/strider-cd/test-node/config/tab-branches')
         .elementByName('name')
         .type('feature/*')
         .elementByCssSelector('#project_config_branches form button')
@@ -28,32 +28,32 @@ module.exports = function (browser, callback) {
         .waitForElementByCssSelector('.message')
         .elementsByCssSelector('.branch-item')
         .then(function (items) {
-          items.length.should.equal(2, 'number of items in branch panel list')
+          items.length.should.equal(2, 'number of items in branch panel list');
         })
         .elementsByCssSelector('.branch-picker select option')
         .then(function (items) {
-          items.length.should.equal(2, 'number of items in branch select')
-        })
-    })
+          items.length.should.equal(2, 'number of items in branch select');
+        });
+    });
 
     it('should have persisted new branch', function () {
       return browser.rel('/strider-cd/test-node/config')
         .waitForElementByCssSelector('.branch-item')
         .elementsByCssSelector('.branch-item')
         .then(function (items) {
-          items.length.should.equal(2, 'number of items in branch panel list')
+          items.length.should.equal(2, 'number of items in branch panel list');
         })
         .elementsByCssSelector('.branch-picker select option')
         .then(function (items) {
-          items.length.should.equal(2, 'number of items in branch select')
-        })
-    })
+          items.length.should.equal(2, 'number of items in branch select');
+        });
+    });
 
     after(function () {
       return browser.quit(function () {
-        callback()
-      })
-    })
+        callback();
+      });
+    });
 
-  })
-}
+  });
+};

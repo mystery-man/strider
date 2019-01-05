@@ -1,98 +1,97 @@
-var assert = require('assert')
-  , auth = require('../../lib/auth')
-  , middleware = require('../../lib/middleware')
-  , should = require('should')
-  ;
+'use strict';
 
-describe('middleware', function() {
-  describe('#require_admin()', function() {
-    it('should only be accessible to admin user', function() {
-      var mock_req = {user: {}};
-      var response_api = {end: function() {}};
+var should = require('chai').should();
+var httpMocks = require('node-mocks-http');
+var auth = require('../../lib/auth');
+var middleware = require('../../lib/middleware');
 
-      middleware.require_admin(mock_req, response_api, function() { response_api.statusCode = 200 });
+describe('middleware', function () {
+  describe('#require_admin()', function () {
+    it('should only be accessible to admin user', function () {
+      var mockReq = httpMocks.createRequest();
+      var mockRes = httpMocks.createResponse();
 
-      response_api.statusCode.should.eql(401);
+      mockReq.user = {};
 
-      mock_req = {user: {account_level:1}};
-      middleware.require_admin(mock_req, response_api, function() { response_api.statusCode = 200 });
+      middleware.require_admin(mockReq, mockRes, function () {
+        mockRes.statusCode = 200;
+      });
 
-      response_api.statusCode.should.eql(200);
-    });
-  });
-  describe('#require_auth()', function() {
-    it('should only be accessible to authenticated user', function() {
-      var mock_req = {};
-      var response_api = {end: function() {}};
+      mockRes.statusCode.should.eql(401);
+      mockReq.user = {account_level: 1};
 
-      middleware.require_auth(mock_req, response_api, function() { response_api.statusCode = 401 });
+      middleware.require_admin(mockReq, mockRes, function () {
+        mockRes.statusCode = 200;
+      });
 
-      response_api.statusCode.should.eql(401);
-
-      mock_req = {user: {account_level:1}};
-      middleware.require_admin(mock_req, response_api, function() { response_api.statusCode = 200 });
-
-      response_api.statusCode.should.eql(200);
+      mockRes.statusCode.should.eql(200);
     });
   });
 
-  describe("#require_params()", function() {
-    it("should fallthrough if all params are present", function() {
-      var mock_req = {
-        params: {
-          org: "beyondfog",
-          repo: "strider"
-        },
-        param: function(key) {
-          return this.params[key];
+  describe('#require_auth()', function () {
+    it('should only be accessible to authenticated user', function () {
+      var mockReq = httpMocks.createRequest();
+      var mockRes = httpMocks.createResponse();
+
+      middleware.require_auth(mockReq, mockRes, function () {
+        mockRes.statusCode = 401;
+      });
+
+      mockRes.statusCode.should.eql(401);
+
+      mockReq.user = {account_level: 1};
+      middleware.require_admin(mockReq, mockRes, function () {
+        mockRes.statusCode = 200;
+      });
+
+      mockRes.statusCode.should.eql(200);
+    });
+  });
+
+  describe('#requireBody()', function () {
+    it('should fallthrough if all params are present', function () {
+      var mockReq = httpMocks.createRequest({
+        body: {
+          email: 'user@email.com',
+          name: 'New Guy'
         }
-      };
-      var response_api = {end: function() {}};
+      });
+      var mockRes = httpMocks.createResponse();
 
-      middleware.require_params(["org", "repo"])(mock_req, response_api,
-        function() { response_api.statusCode = 200 });
+      middleware.requireBody(['email', 'name'])(mockReq, mockRes, function () {
+        mockRes.statusCode = 200;
+      });
 
-      response_api.statusCode.should.eql(200);
+      mockRes.statusCode.should.eql(200);
     });
 
-    it("should error if at least one params is missing", function() {
-      var mock_req = {
-        params: {
-          org: "beyondfog",
+    it('should error if at least one params is missing', function () {
+      var mockReq = httpMocks.createRequest({
+        body: {
+          name: 'New Guy'
         },
-        param: function(key) {
-          return this.params[key];
-        }
-      };
-      var body;
-      var response_api = {end: function(b) {body = b;}};
+      });
+      var mockRes = httpMocks.createResponse();
 
-      middleware.require_params(["org", "repo"])(mock_req, response_api,
-        function() { response_api.statusCode = 200 });
+      middleware.requireBody(['email', 'name'])(mockReq, mockRes, function () {
+        mockRes.statusCode = 200;
+      });
 
-      response_api.statusCode.should.eql(400);
-      response_api.statusCode = 0;
-      var data = JSON.parse(body);
+      mockRes.statusCode.should.eql(400);
+      var data = JSON.parse(mockRes._getData());
       data.errors.length.should.eql(1);
     });
 
-    it("should error if multiple params are missing", function() {
-      var mock_req = {
-        params: {
-        },
-        param: function(key) {
-          return this.params[key];
-        }
-      };
-      var body;
-      var response_api = {end: function(b) {body = b;}};
+    it('should error if multiple params are missing', function () {
+      var mockReq = httpMocks.createRequest();
+      var mockRes = httpMocks.createResponse();
 
-      middleware.require_params(["org", "repo"])(mock_req, response_api,
-        function() { response_api.statusCode = 200 });
+      middleware.requireBody(['email', 'name'])(mockReq, mockRes, function () {
+        mockRes.statusCode = 200;
+      });
 
-      response_api.statusCode.should.eql(400);
-      response_api.statusCode = 0;
-      var data = JSON.parse(body);
+      mockRes.statusCode.should.eql(400);
+      var data = JSON.parse(mockRes._getData());
       data.errors.length.should.eql(2);
     });
   });

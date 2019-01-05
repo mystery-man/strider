@@ -1,5 +1,3 @@
-// TODO: go through this comment
-/* globals bootbox: true, io: true, SKELS: true, job: true */
 'use strict';
 
 var angular = require('angular');

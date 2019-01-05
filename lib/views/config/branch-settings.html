@@ -1,13 +1,21 @@
 <div class="general-config">
   <label class="checkbox">
-    <input type="checkbox" ng-model="branch.active" data-test="active" ng-change="saveGeneralBranch()"> Active
+    <input type="checkbox" ng-model="branch.active" data-test="active"> Active
   </label>
   <p class="help-text">When a branch is deactivated, tests and deploys can only be triggered manually.</p>
 
   <label class="checkbox">
-    <input type="checkbox" ng-model="branch.deploy_on_green" ng-change="saveGeneralBranch()"> Deploy on Green
+    <input type="checkbox" ng-model="branch.deploy_on_green"> Deploy on Green
   </label>
   <p class="help-text">When "deploy on green" is disabled, automatically triggered builds will not deploy.</p>
+  
+  <label class="checkbox">
+    <input type="checkbox" ng-model="branch.deploy_on_pull_request"> Deploy on Pull Request
+  </label>
+  <p class="help-text">When "deploy on pull request" is disabled, pull request builds will not deploy.</p>
+  
+  
+
 
   <div id="ssh-keys">
     <h3>SSH keys</h3>
@@ -30,7 +38,7 @@
       </div>
       <div class="span9">
         <label class="checkbox pull-right">
-          <input ng-model="branch.envKeys" ng-change="saveGeneralBranch()" type="checkbox"> Make ssh keys available on the ENV as STRIDER_SSH_PUB and STRIDER_SSH_PRIV
+          <input ng-model="branch.envKeys" type="checkbox"> Make ssh keys available on the ENV as STRIDER_SSH_PUB and STRIDER_SSH_PRIV
         </label>
       </div>
     </div>
@@ -38,7 +46,7 @@
     <div class="row-fluid" ng-hide="branch.name === 'master'">
       <div class="span12">
         <h3>Reset Branch Configuration</h3>
-        
+
         <p>
           This will reset all of the configuration for this branch to
           be exactly like the 'master' branch. You will have a chance to decline after
@@ -74,4 +82,6 @@
       </div>
     </div>
   </div>
+
+  <button ng-click="saveGeneralBranch()" class="btn btn-primary pull-right">Save</button>
 </div>

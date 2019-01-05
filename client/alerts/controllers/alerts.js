@@ -28,6 +28,7 @@ module.exports = function ($scope, $sce) {
   };
 
   var waitTime = null;
+  var clearTime = null;
   $scope.success = function (text, digest, sticky) {
     if (waitTime) {
       clearTimeout(waitTime);
@@ -40,7 +41,7 @@ module.exports = function ($scope, $sce) {
     }
 
     $scope.message = {
-      text: $sce.trustAsHtml('<strong>Done.</strong> ' + text),
+      text: $sce.trustAsHtml(`<strong>Done.</strong> ${text}`),
       type: 'success',
       showing: true
     };
@@ -57,7 +58,6 @@ module.exports = function ($scope, $sce) {
     }
   };
 
-  var clearTime = null;
   $scope.clearMessage = function () {
     if (clearTime) {
       clearTimeout(clearTime);
